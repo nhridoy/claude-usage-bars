@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { addTurn, family, label, resetOffer, scopedMeters, shares, tone, toUsage } from '../hooks/register'
+import { addTurn, addWeek, family, fmtHit, label, levelOf, paceHit, resetOffer, scopedMeters, shares, tone, toUsage, weekId, windowMs } from '../hooks/register'
 
 const turn = (model: string, n: number) => ({
   model,
@@ -27,6 +27,35 @@ test('colors, labels and model share', async () => {
     cost: { usd: 1.25 },
   })
   expect(u.meters.map(m => m.label)).toEqual(['Context window', 'Session · 5h'])
+})
+
+test('model share leaves cache reads out and a new week starts over', async () => {
+  const u = { model: 'claude-opus-5-5', input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 9999, cache_creation_input_tokens: 5 }
+  expect(addTurn({}, u)).toEqual({ Opus: 20 })
+  const w1 = addWeek(null, '2026-10-28T04', u)
+  expect(addWeek(w1, '2026-10-28T04', u).tokens).toEqual({ Opus: 40 })
+  expect(addWeek(w1, '2026-11-04T04', u)).toEqual({ id: '2026-11-04T04', tokens: { Opus: 20 } })
+  const usage = { meters: [{ label: 'Weekly · all models', percent: 48, resetsAt: '2026-10-28T04:00:00.092566+00:00' }] }
+  expect(weekId(usage)).toBe('2026-10-28T04')
+  expect(weekId(null)).toBe('all')
+})
+
+test('thresholds and the pace hint', async () => {
+  expect([tone(60, 70, 90), tone(75, 70, 90), tone(95, 70, 90)]).toEqual(['success', 'warning', 'error'])
+  expect([levelOf(50, [80, 95]), levelOf(80, [80, 95]), levelOf(97, [80, 95])]).toEqual([0, 80, 95])
+  expect([windowMs('Session · 5h'), windowMs('Weekly · Fable'), windowMs('Context window')]).toEqual([5 * 3600000, 168 * 3600000, undefined])
+
+  const H = 3600000
+  const now = Date.parse('2026-10-26T10:00:00Z')
+  // 3 days into the week at 40%: 100% would come at day 7.5, after the reset, so no warning.
+  expect(paceHit(40, new Date(now + 4 * 24 * H).toISOString(), 168 * H, now)).toBe(null)
+  // 2 days in at 60%: 100% after 3.33 days, so 1.33 days from now, well before the reset.
+  const hit = paceHit(60, new Date(now + 5 * 24 * H).toISOString(), 168 * H, now)
+  expect(Math.round(((hit ?? 0) - now) / H)).toBe(32)
+  expect(paceHit(10, new Date(now + 4.9 * H).toISOString(), 5 * H, now)).toBe(null) // too early to tell
+  expect(paceHit(100, new Date(now + H).toISOString(), 5 * H, now)).toBe(null) // already there
+  expect(fmtHit(now + 90 * 60000, now)).toBe('in 1h 30m')
+  expect(fmtHit(now + 50 * H, now)).toMatch(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat) \d{1,2}(am|pm)$/)
 })
 
 test('model-scoped weekly limits come from the usage endpoint body', async () => {
@@ -62,6 +91,7 @@ test('the reset button runs /limit-reset', async ($, on) => {
       offer: { left: 2 },
       usage: { meters: [{ label: 'Session · 5h', percent: 100 }] },
       scoped: [],
+      week: null,
       models: {},
       isExpanded: true,
     }
@@ -82,6 +112,7 @@ for (const surface of ['terminal', 'vscode'] as const) {
       if (key === 'models') return { value: { value: { Fable: 300, Opus: 100 }, version: 1 } }
       if (key === 'isExpanded') return { value: { value: true, version: 1 } }
       if (key === 'scoped') return { value: { value: [{ label: 'Weekly · Fable', percent: 81 }], version: 1 } }
+      if (key === 'week') return { value: { value: { id: 'all', tokens: { Opus: 10, Fable: 30 } }, version: 1 }, }
       return { value: { value: { meters: [{ label: 'Context window', percent: 42 }], usd: 1.25 }, version: 1 } }
     })
     const ui = await $.ui.mount({
@@ -95,6 +126,7 @@ for (const surface of ['terminal', 'vscode'] as const) {
     expect((await ui.find({ type: 'Text', text: /\$1\.25/ })) !== undefined).toBe(true)
     expect(await ui.find({ type: 'Text', text: /Weekly · Fable/ })).toBeTruthy()
     expect(await ui.find({ type: 'Text', text: /81%/ })).toBeTruthy()
+    expect(await ui.find({ type: 'Text', text: /Models this week/ })).toBeTruthy()
     await ui.unmount()
   })
 }

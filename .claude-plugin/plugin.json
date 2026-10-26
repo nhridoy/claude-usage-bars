@@ -1,7 +1,41 @@
 {
   "name": "usage-bars",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Colored usage bars above the prompt: context window, 5-hour, weekly and per-model (e.g. Fable) limits, model share and session cost, plus a button for Claude's limit-reset offers. Per-model limits and reset offers are read from Anthropic's internal usage endpoint with your Claude login.",
-  "author": { "name": "Nahidujjaman Hridoy" },
-  "types": "./types/index.d.ts"
+  "author": {
+    "name": "Nahidujjaman Hridoy"
+  },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "warnAt": {
+      "type": "number",
+      "title": "Yellow from (%)",
+      "description": "A bar turns yellow at this percentage.",
+      "default": 50
+    },
+    "dangerAt": {
+      "type": "number",
+      "title": "Red from (%)",
+      "description": "A bar turns red at this percentage, and an alert pops up here and again at 95%.",
+      "default": 80
+    },
+    "alerts": {
+      "type": "boolean",
+      "title": "Limit alerts",
+      "description": "Pop up when a rate limit crosses the red line and 95%.",
+      "default": true
+    },
+    "showCost": {
+      "type": "boolean",
+      "title": "Show session cost",
+      "description": "Show what the session has cost so far.",
+      "default": true
+    },
+    "pollSeconds": {
+      "type": "number",
+      "title": "Refresh every (seconds)",
+      "description": "How often the per-model limits and reset offers are fetched (at least 30).",
+      "default": 60
+    }
+  }
 }
