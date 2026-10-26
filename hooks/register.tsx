@@ -182,7 +182,8 @@ const blocks = (percent: number) => {
 
 const num = (v: unknown, d: number) => (typeof v === 'number' && v > 0 ? v : d)
 
-const pct = (p: number) => `${p.toFixed(0)}%`
+// One decimal at most, and none when it is a whole number: 81 -> 81%, 23.5 -> 23.5%.
+export const pct = (p: number) => `${Math.round(p * 10) / 10}%`
 
 type Config = { warnAt: number; dangerAt: number; pollMs: number; hasAlerts: boolean; hasCost: boolean }
 
@@ -375,7 +376,7 @@ export const register: Register = (on, options) => {
                 <Text weight="semibold">{m.label.padEnd(20)}</Text>
                 <Text color={color(m.percent)}>{filled}</Text>
                 <Text dimColor>{empty}</Text>
-                <Text color={color(m.percent)} weight="semibold">{` ${pct(m.percent).padStart(4)}`}</Text>
+                <Text color={color(m.percent)} weight="semibold">{` ${pct(m.percent).padStart(6)}`}</Text>
                 <Text dimColor>{resetsText && `  ${resetsText}`}</Text>
                 <Text color="warning">{paceText && `  · ${paceText}`}</Text>
               </Text>

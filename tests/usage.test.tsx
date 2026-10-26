@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { addTurn, addWeek, family, fmtHit, label, levelOf, paceHit, resetOffer, scopedMeters, shares, tone, toUsage, weekId, windowMs } from '../hooks/register'
+import { addTurn, addWeek, family, fmtHit, label, levelOf, paceHit, pct, resetOffer, scopedMeters, shares, tone, toUsage, weekId, windowMs } from '../hooks/register'
 
 const turn = (model: string, n: number) => ({
   model,
@@ -38,6 +38,10 @@ test('model share leaves cache reads out and a new week starts over', async () =
   const usage = { meters: [{ label: 'Weekly · all models', percent: 48, resetsAt: '2026-10-28T04:00:00.092566+00:00' }] }
   expect(weekId(usage)).toBe('2026-10-28T04')
   expect(weekId(null)).toBe('all')
+})
+
+test('percentages keep one decimal and drop a trailing .0', async () => {
+  expect([pct(81), pct(23.5), pct(81.04), pct(99.96), pct(0)]).toEqual(['81%', '23.5%', '81%', '100%', '0%'])
 })
 
 test('thresholds and the pace hint', async () => {
