@@ -1,0 +1,7 @@
+{
+  "name": "usage-bars",
+  "version": "0.1.0",
+  "description": "Colored usage bars above the prompt: context window, 5-hour, weekly and per-model (e.g. Fable) limits, model share and session cost, plus a button for Claude's limit-reset offers. Per-model limits and reset offers are read from Anthropic's internal usage endpoint with your Claude login.",
+  "author": { "name": "Nahidujjaman Hridoy" },
+  "types": "./types/index.d.ts"
+}

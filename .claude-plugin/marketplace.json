@@ -1,0 +1,6 @@
+{
+  "name": "claude-usage-bars",
+  "description": "Colored usage bars for Claude Code: context, rate limits, per-model limits and model share.",
+  "owner": { "name": "Nahidujjaman Hridoy" },
+  "plugins": [{ "name": "usage-bars", "source": "./" }]
+}
