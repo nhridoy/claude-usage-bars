@@ -1,6 +1,14 @@
 # usage-bars
 
-A Claude Code mod that draws colored usage bars above the prompt:
+A Claude Code mod that draws colored usage bars above the prompt.
+
+![Expanded view: context window, 5-hour, weekly and Fable limits, and model share](docs/expanded.png)
+
+Collapsed to one line:
+
+![Collapsed view](docs/collapsed.png)
+
+What it shows:
 
 - **Context window**: how full the current conversation is
 - **Session · 5h** and **Weekly · all models**: your plan's rate limits, with reset times
